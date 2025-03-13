@@ -15,11 +15,14 @@ const Gameboard = (function() {
     const ROWS = 3
     const COLUMNS = 3
     const board = []
+    populateBoard()
 
-    for (let i = 0; i < ROWS; i++) {
-        board[i] = []
-        for (let j = 0; j < COLUMNS; j++) {
-            board[i].push(Cell())
+    function populateBoard() {
+        for (let i = 0; i < ROWS; i++) {
+            board[i] = []
+            for (let j = 0; j < COLUMNS; j++) {
+                board[i].push(Cell())
+            }
         }
     }
 
@@ -70,7 +73,12 @@ const Gameboard = (function() {
                 return true
     }
     
-    return {getBoard, updateCell, printBoard, checkWin}
+    const reset = function() {
+        board.length = 0
+        populateBoard()
+    }
+
+    return {getBoard, updateCell, printBoard, checkWin, reset}
 })()
 
 const Player = function(name, token) {
@@ -98,8 +106,8 @@ const Player = function(name, token) {
 const GameController = (function() {
     let gameWinner = ''
 
-    const playerOne = Player('John', 1)
-    const playerTwo = Player('Nash', 2)
+    const playerOne = Player('John', 'X')
+    const playerTwo = Player('Nash', 'O')
 
     const players = [playerOne, playerTwo]
 
@@ -134,14 +142,30 @@ const GameController = (function() {
         printGameboard()            
     }
 
+    const resetGame = () => {
+        Gameboard.reset()
+        gameWinner = ''
+        if (getActivePlayer() !== players[0]) {
+            switchActivePlayer()
+        }
+        screenController.updateScreen()
+    }
+
     printGameboard()
 
-    return {playRound, getActivePlayer, getWinner}
+    return {playRound, getActivePlayer, getWinner, resetGame}
 })()
 
 const screenController = (function () {
     const boardDiv = document.querySelector('.board')
     const scoreDiv = document.querySelector('.score')
+    const controlsDiv = document.querySelector('.controls')
+
+    //game reset button
+    const resetBtn = document.createElement('button')
+    resetBtn.textContent = 'Reset Game'
+    resetBtn.addEventListener('click', resetBtnHandler)
+    controlsDiv.appendChild(resetBtn)
 
     function updateScreen() {
         boardDiv.innerHTML = ''
@@ -158,20 +182,22 @@ const screenController = (function () {
                 cell.classList.add('gridCell')
                 cell.dataset.row = i
                 cell.dataset.col = j
-                cell.textContent = board[i][j].getValue()
+                if (board[i][j].getValue())
+                    cell.textContent = board[i][j].getValue()
                 newRow.appendChild(cell)
             }
             boardDiv.appendChild(newRow)
         }
 
+        //grid click handling
         const cells = document.querySelectorAll('.gridCell')
         cells.forEach(cell => cell.addEventListener('click', clickHandler))
 
+        //current player text field
         if (GameController.getWinner())
             scoreDiv.textContent = `${GameController.getWinner()} HAS WON`
         else 
             scoreDiv.textContent = `${activePlayer.userName}'s turn`
-
     }
 
     function clickHandler() {
@@ -180,6 +206,11 @@ const screenController = (function () {
         }
         updateScreen()
     }
+
+    function resetBtnHandler() {
+        GameController.resetGame()
+    }
+
     updateScreen()
     return {updateScreen}
 })()

@@ -8,3 +8,8 @@ body {
 .gridRow {
     display: flex;
 }
+
+button {
+    height: 50px;
+    width: 50px;
+}
