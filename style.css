@@ -2,7 +2,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px
+    gap: 10px;
+    flex-direction: column;
 }
 
 .gridRow {
@@ -10,6 +11,23 @@ body {
 }
 
 button {
-    height: 50px;
-    width: 50px;
+    height: 60px;
+    width: 60px;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1
+}
+
+.board {
+    flex: 1
+}
+
+.score {
+    flex: 1;
+    text-align: center;
 }

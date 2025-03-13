@@ -99,13 +99,15 @@ const Player = function(name, token) {
     function createPlayer() {
         let active = false
         const playerToken = token
-        const {userName} = createUser()
+        let {userName} = createUser()
 
         const toggleActive = () => active = !active  
         const isActive = () => active
         const getToken = () => playerToken
+        const getName = () => userName
+        const setName = (newName) => userName = newName
         
-        return {userName, toggleActive, isActive, getToken}
+        return {getName, setName, toggleActive, isActive, getToken}
     }
 
     return createPlayer()
@@ -130,17 +132,18 @@ const GameController = (function() {
 
     const getActivePlayer = () => activePlayer
     const getWinner = () => gameWinner
+    const getPlayers = () => players
 
     const printGameboard = () => {
         Gameboard.printBoard()
-        console.log(`${activePlayer.userName}'s turn`)
+        console.log(`${activePlayer.getName()}'s turn`)
     }
 
     const playRound = (row, col) => {
-        console.log(`${getActivePlayer().userName} chose cell with row: ${row} column: ${col}`)
+        console.log(`${activePlayer.getName()} chose cell with row: ${row} column: ${col}`)
         if ( Gameboard.updateCell(row, col, getActivePlayer().getToken()) )
             if (Gameboard.checkWin()) {
-                gameWinner = getActivePlayer().userName
+                gameWinner = activePlayer.getName()
                 console.log(`${gameWinner} WON`)
             }
             else if (Gameboard.checkTie()) {
@@ -165,7 +168,7 @@ const GameController = (function() {
 
     printGameboard()
 
-    return {playRound, getActivePlayer, getWinner, resetGame}
+    return {playRound, getActivePlayer, getWinner, resetGame, getPlayers}
 })()
 
 const screenController = (function () {
@@ -178,6 +181,35 @@ const screenController = (function () {
     resetBtn.textContent = 'Reset Game'
     resetBtn.addEventListener('click', resetBtnHandler)
     controlsDiv.appendChild(resetBtn)
+
+    //player name input
+    const playerOneInput = document.createElement('input');
+    playerOneInput.type = 'text';
+    playerOneInput.placeholder = 'Player 1 Name';
+    playerOneInput.id = 'playerOneName';
+    
+    const playerTwoInput = document.createElement('input');
+    playerTwoInput.type = 'text';
+    playerTwoInput.placeholder = 'Player 2 Name';
+    playerTwoInput.id = 'playerTwoName';
+    
+    const playerOneLabel = document.createElement('label');
+    playerOneLabel.textContent = 'Player 1 Name:';
+    playerOneLabel.htmlFor = 'playerOneName';
+    
+    const playerTwoLabel = document.createElement('label');
+    playerTwoLabel.textContent = 'Player 2 Name:';
+    playerTwoLabel.htmlFor = 'playerTwoName';
+    
+    controlsDiv.appendChild(playerOneLabel);
+    controlsDiv.appendChild(playerOneInput);
+    controlsDiv.appendChild(playerTwoLabel);
+    controlsDiv.appendChild(playerTwoInput);
+
+    const applyNamesBtn = document.createElement('button');
+    applyNamesBtn.textContent = 'Apply Names';
+    applyNamesBtn.addEventListener('click', updatePlayerNames);
+    controlsDiv.appendChild(applyNamesBtn);
 
     function updateScreen() {
         boardDiv.innerHTML = ''
@@ -207,7 +239,17 @@ const screenController = (function () {
 
         //current player text field
         scoreDiv.textContent = GameController.getWinner() ? `${GameController.getWinner()} WON` :
-                                                            `${activePlayer.userName}'s turn`
+                                                            `${activePlayer.getName()}'s turn`
+    }
+
+    function updatePlayerNames() {
+        const playerOneName = document.getElementById('playerOneName').value;
+        const playerTwoName = document.getElementById('playerTwoName').value;
+    
+        GameController.getPlayers()[0].setName(playerOneName);
+        GameController.getPlayers()[1].setName(playerTwoName);
+    
+        updateScreen();
     }
 
     function clickHandler() {
