@@ -72,13 +72,21 @@ const Gameboard = (function() {
             board[2][0].getValue() !== 0)
                 return true
     }
+
+    const checkTie = function() {
+        const boardWithValues = board.map(row => row.map(cell => cell.getValue()))
+        if ( boardWithValues.some(row => row.includes(0)) )
+            return false
+        else
+            return true
+    }
     
     const reset = function() {
         board.length = 0
         populateBoard()
     }
 
-    return {getBoard, updateCell, printBoard, checkWin, reset}
+    return {getBoard, updateCell, printBoard, checkWin, checkTie, reset}
 })()
 
 const Player = function(name, token) {
@@ -134,6 +142,10 @@ const GameController = (function() {
             if (Gameboard.checkWin()) {
                 gameWinner = getActivePlayer().userName
                 console.log(`${gameWinner} WON`)
+            }
+            else if (Gameboard.checkTie()) {
+                gameWinner = 'TIE'
+                console.log(`it's a tie`)
             }
             else {
                 switchActivePlayer()
@@ -194,10 +206,8 @@ const screenController = (function () {
         cells.forEach(cell => cell.addEventListener('click', clickHandler))
 
         //current player text field
-        if (GameController.getWinner())
-            scoreDiv.textContent = `${GameController.getWinner()} HAS WON`
-        else 
-            scoreDiv.textContent = `${activePlayer.userName}'s turn`
+        scoreDiv.textContent = GameController.getWinner() ? `${GameController.getWinner()} WON` :
+                                                            `${activePlayer.userName}'s turn`
     }
 
     function clickHandler() {
