@@ -1,4 +1,16 @@
-function Gameboard() {
+const Cell = function() {
+    let value = 0
+
+    const updateValue = (playerToken) => {
+        value = playerToken
+    }
+
+    const getValue = () => value
+
+    return {updateValue, getValue}
+}
+
+const Gameboard = (function() {
     
     const ROWS = 3
     const COLUMNS = 3
@@ -32,22 +44,36 @@ function Gameboard() {
         const boardWithValues = board.map(row => row.map(cell => cell.getValue()))
         console.log(boardWithValues)
     }
-    return {getBoard, updateCell, printBoard}
-}
 
-function Cell() {
-    let value = 0
+    const checkWin = () => {
+        for (let i = 0; i < ROWS; i++) {
+            if (board[i][0].getValue() === board[i][1].getValue() &&
+                board[i][1].getValue() === board[i][2].getValue() &&
+                board[i][2].getValue() !== 0)
+                    return true
+        }
 
-    const updateValue = (playerToken) => {
-        value = playerToken
+        for (let j = 0; j < COLUMNS; j++) {
+            if (board[0][j].getValue() === board[1][j].getValue() &&
+                board[1][j].getValue() === board[2][j].getValue() &&
+                board[2][j].getValue() !== 0)
+                    return true
+        }
+
+        if (board[0][0].getValue() === board[1][1].getValue() &&
+            board[1][1].getValue() === board[2][2].getValue() && 
+            board[2][2].getValue() !== 0)
+                return true
+        if (board[0][2].getValue() === board[1][1].getValue() && 
+            board[1][1].getValue() === board[2][0].getValue() &&
+            board[2][0].getValue() !== 0)
+                return true
     }
+    
+    return {getBoard, updateCell, printBoard, checkWin}
+})()
 
-    const getValue = () => value
-
-    return {updateValue, getValue}
-}
-
-function Player(name, token) {
+const Player = function(name, token) {
     function createUser() {
         const userName = name
         const id = crypto.randomUUID()
@@ -69,10 +95,11 @@ function Player(name, token) {
     return createPlayer()
 }
 
-function GameController() {
+const GameController = (function() {
+    let gameWinner = ''
+
     const playerOne = Player('John', 1)
     const playerTwo = Player('Nash', 2)
-    const myGameboard = Gameboard()
 
     const players = [playerOne, playerTwo]
 
@@ -86,20 +113,73 @@ function GameController() {
     }
 
     const getActivePlayer = () => activePlayer
+    const getWinner = () => gameWinner
 
-    const printGamebord = () => {
-        myGameboard.printBoard()
+    const printGameboard = () => {
+        Gameboard.printBoard()
         console.log(`${activePlayer.userName}'s turn`)
     }
 
     const playRound = (row, col) => {
         console.log(`${getActivePlayer().userName} chose cell with row: ${row} column: ${col}`)
-        if ( myGameboard.updateCell(row, col, getActivePlayer().getToken()) )
-            switchActivePlayer()
-        printGamebord()
+        if ( Gameboard.updateCell(row, col, getActivePlayer().getToken()) )
+            if (Gameboard.checkWin()) {
+                gameWinner = getActivePlayer().userName
+                console.log(`${gameWinner} WON`)
+            }
+            else {
+                switchActivePlayer()
+            }
+
+        printGameboard()            
     }
 
-    printGamebord()
+    printGameboard()
 
-    return {playRound, getActivePlayer}
-}
+    return {playRound, getActivePlayer, getWinner}
+})()
+
+const screenController = (function () {
+    const boardDiv = document.querySelector('.board')
+    const scoreDiv = document.querySelector('.score')
+
+    function updateScreen() {
+        boardDiv.innerHTML = ''
+
+        const board = Gameboard.getBoard()
+        const activePlayer = GameController.getActivePlayer()
+        
+        for (let i = 0; i < board.length; i++) {
+            const newRow = document.createElement('div')
+            newRow.classList.add('gridRow')
+
+            for (let j = 0; j < board[i].length; j++) {
+                const cell = document.createElement('button')
+                cell.classList.add('gridCell')
+                cell.dataset.row = i
+                cell.dataset.col = j
+                cell.textContent = board[i][j].getValue()
+                newRow.appendChild(cell)
+            }
+            boardDiv.appendChild(newRow)
+        }
+
+        const cells = document.querySelectorAll('.gridCell')
+        cells.forEach(cell => cell.addEventListener('click', clickHandler))
+
+        if (GameController.getWinner())
+            scoreDiv.textContent = `${GameController.getWinner()} HAS WON`
+        else 
+            scoreDiv.textContent = `${activePlayer.userName}'s turn`
+
+    }
+
+    function clickHandler() {
+        if (!GameController.getWinner()) {
+            GameController.playRound(this.dataset.row, this.dataset.col)
+        }
+        updateScreen()
+    }
+    updateScreen()
+    return {updateScreen}
+})()
